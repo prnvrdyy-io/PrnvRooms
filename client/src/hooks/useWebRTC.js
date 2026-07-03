@@ -27,7 +27,7 @@ const ICE_SERVERS = {
   ],
 };
 
-export function useWebRTC(roomId) {
+export function useWebRTC(roomId, options = {}) {
   const socket = useSocket();
   const { user } = useAuth();
   
@@ -38,6 +38,9 @@ export function useWebRTC(roomId) {
   // Screen Share state
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenStreamRef = useRef(null);
+
+  // Hand Raise state
+  const [isHandRaised, setIsHandRaised] = useState(false);
   
   // Refs to keep track of Peer Connections without triggering re-renders
   const peerConnections = useRef({}); // { [socketId]: RTCPeerConnection }
@@ -96,7 +99,7 @@ export function useWebRTC(roomId) {
         if (prev.find(s => s.socketId === remoteSocketId)) {
           return prev;
         }
-        return [...prev, { socketId: remoteSocketId, stream: remoteStream, username: remoteUsername || 'Guest' }];
+        return [...prev, { socketId: remoteSocketId, stream: remoteStream, username: remoteUsername || 'Guest', isHandRaised: false }];
       });
     };
 
@@ -175,6 +178,25 @@ export function useWebRTC(roomId) {
       setRemoteStreams(prev => prev.filter(s => s.socketId !== socketId));
     };
 
+    // -- Event: Hand Toggled --
+    const handleHandToggle = ({ socketId, isRaised }) => {
+      setRemoteStreams(prev => prev.map(s => 
+        s.socketId === socketId ? { ...s, isHandRaised: isRaised } : s
+      ));
+    };
+
+    // -- Event: Force Mute (from Admin) --
+    const handleForceMute = () => {
+      if (localStreamRef.current) {
+        const audioTrack = localStreamRef.current.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.enabled = false;
+          toast('The host has muted your microphone.', { icon: '🔇' });
+          if (options.onForceMute) options.onForceMute();
+        }
+      }
+    };
+
     // We join the room *after* attempting to get user media.
     const setupRoom = async () => {
       await initLocalStream(); // Wait for user to allow/deny camera
@@ -187,6 +209,8 @@ export function useWebRTC(roomId) {
       socket.on('answer', handleReceiveAnswer);
       socket.on('ice-candidate', handleReceiveIceCandidate);
       socket.on('user-disconnected', handleUserDisconnected);
+      socket.on('hand-toggle', handleHandToggle);
+      socket.on('force-mute', handleForceMute);
 
       socket.emit('join-room', { roomId, user });
     };
@@ -201,6 +225,8 @@ export function useWebRTC(roomId) {
       socket.off('answer', handleReceiveAnswer);
       socket.off('ice-candidate', handleReceiveIceCandidate);
       socket.off('user-disconnected', handleUserDisconnected);
+      socket.off('hand-toggle', handleHandToggle);
+      socket.off('force-mute', handleForceMute);
       
       // Stop all tracks in local stream
       if (localStreamRef.current) {
@@ -285,12 +311,33 @@ export function useWebRTC(roomId) {
     }
   };
 
+  // --- Hand Raising ---
+  const toggleHandRaise = () => {
+    const newState = !isHandRaised;
+    setIsHandRaised(newState);
+    if (socket) {
+      socket.emit('hand-toggle', { roomId, isRaised: newState });
+    }
+    return newState;
+  };
+
+  // --- Admin Controls ---
+  const adminMuteAll = () => {
+    if (socket) {
+      socket.emit('admin-mute-all', { roomId });
+      toast.success('Muted all other participants');
+    }
+  };
+
   return {
     localStream,
     remoteStreams,
     toggleAudio,
     toggleVideo,
     toggleScreenShare,
-    isScreenSharing
+    isScreenSharing,
+    isHandRaised,
+    toggleHandRaise,
+    adminMuteAll
   };
 }

@@ -14,19 +14,25 @@ import {
   HiOutlineMicrophone, 
   HiOutlineVideoCamera,
   HiChatAlt2,
-  HiDesktopComputer
+  HiDesktopComputer,
+  HiHand,
+  HiOutlineHand,
+  HiStop,
+  HiRecord,
+  HiVolumeOff
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 import { useWebRTC } from '@/hooks/useWebRTC';
 import { useChat } from '@/hooks/useChat';
 import { meetingService } from '@/services/meetingService';
+import { useAuth } from '@/hooks/useAuth';
 import { PageLoader } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
 import { ChatPanel } from '@/components/meeting/ChatPanel';
 
 // Video helper component to attach MediaStream to HTMLVideoElement
-const VideoPlayer = ({ stream, isLocal = false, username }) => {
+const VideoPlayer = ({ stream, isLocal = false, username, isHandRaised = false }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -53,9 +59,13 @@ const VideoPlayer = ({ stream, isLocal = false, username }) => {
         borderRadius: 'var(--radius-md)',
         color: '#fff',
         fontSize: '0.85rem',
-        backdropFilter: 'blur(4px)'
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8
       }}>
         {username} {isLocal && '(You)'}
+        {isHandRaised && <span style={{ color: 'var(--color-warning)' }}><HiHand size={16} /></span>}
       </div>
     </div>
   );
@@ -64,6 +74,8 @@ const VideoPlayer = ({ stream, isLocal = false, username }) => {
 export default function MeetingPage() {
   const { meetingId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [isVerifying, setIsVerifying] = useState(true);
   const [meeting, setMeeting] = useState(null);
 
@@ -71,6 +83,11 @@ export default function MeetingPage() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Recording Refs
+  const mediaRecorderRef = useRef(null);
+  const recordedChunks = useRef([]);
 
   // Initialize WebRTC and Chat
   const { 
@@ -79,8 +96,13 @@ export default function MeetingPage() {
     toggleAudio, 
     toggleVideo, 
     toggleScreenShare, 
-    isScreenSharing 
-  } = useWebRTC(meetingId);
+    isScreenSharing,
+    isHandRaised,
+    toggleHandRaise,
+    adminMuteAll
+  } = useWebRTC(meetingId, {
+    onForceMute: () => setIsAudioEnabled(false)
+  });
 
   const { messages, sendMessage, unreadCount, markAsRead } = useChat(meetingId);
 
@@ -116,11 +138,65 @@ export default function MeetingPage() {
   };
 
   const handleLeave = () => {
-    // Navigating away will trigger the cleanup in useWebRTC (stopping tracks, closing sockets)
     navigate('/dashboard');
   };
 
+  const toggleRecording = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      toast.success('Recording saved to your computer');
+    } else {
+      try {
+        // We use getDisplayMedia to record the entire layout as the user sees it
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        
+        let options = { mimeType: 'video/webm; codecs=vp9' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm' };
+        }
+        
+        mediaRecorderRef.current = new MediaRecorder(screenStream, options);
+        recordedChunks.current = [];
+
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.current.push(event.data);
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          const blob = new Blob(recordedChunks.current, { type: options.mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `Meeting_Recording_${new Date().toISOString()}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          screenStream.getTracks().forEach(t => t.stop());
+        };
+
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+        toast.success('Recording started');
+        
+        screenStream.getVideoTracks()[0].onended = () => {
+          if (mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+          }
+        };
+      } catch (err) {
+        console.error('Error starting recording', err);
+        toast.error('Could not start recording. You must grant permission.');
+      }
+    }
+  };
+
   if (isVerifying) return <PageLoader message="Joining meeting..." />;
+
+  // Determine if user is host
+  const isHost = meeting?.host === user?._id || meeting?.host?._id === user?._id;
 
   // Calculate grid layout dynamically based on participants
   const totalParticipants = 1 + remoteStreams.length;
@@ -133,8 +209,9 @@ export default function MeetingPage() {
         
         {/* Top Bar */}
         <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 12 }}>
             {meeting?.title || 'Meeting Room'}
+            {isRecording && <span style={{ color: 'var(--color-danger)', display: 'flex', alignItems: 'center', fontSize: '0.9rem', gap: 4, animation: 'pulse 2s infinite' }}><HiRecord /> Recording</span>}
           </h2>
           <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             {totalParticipants} Participant{totalParticipants !== 1 && 's'}
@@ -144,16 +221,16 @@ export default function MeetingPage() {
         {/* Video Grid Area */}
         <div style={{ flex: 1, padding: 24, display: 'grid', gridTemplateColumns, gap: 16, overflowY: 'auto', alignContent: 'center' }}>
           {/* Local User */}
-          <VideoPlayer stream={localStream} isLocal={!isScreenSharing} username="Me" />
+          <VideoPlayer stream={localStream} isLocal={!isScreenSharing} username="Me" isHandRaised={isHandRaised} />
 
           {/* Remote Users */}
           {remoteStreams.map(remote => (
-            <VideoPlayer key={remote.socketId} stream={remote.stream} username={remote.username} />
+            <VideoPlayer key={remote.socketId} stream={remote.stream} username={remote.username} isHandRaised={remote.isHandRaised} />
           ))}
         </div>
 
         {/* Control Bar */}
-        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'center', gap: 16, borderTop: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
+        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'center', gap: 12, borderTop: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
           <Button 
             variant={isAudioEnabled ? "outline" : "danger"} 
             onClick={handleToggleAudio}
@@ -180,6 +257,37 @@ export default function MeetingPage() {
             title={isScreenSharing ? "Stop sharing screen" : "Share screen"}
           >
             <HiDesktopComputer size={24} />
+          </Button>
+
+          <Button 
+            variant={isHandRaised ? "primary" : "outline"} 
+            onClick={toggleHandRaise}
+            style={{ width: 56, height: 56, borderRadius: '50%', padding: 0 }}
+            title={isHandRaised ? "Lower Hand" : "Raise Hand"}
+          >
+            {isHandRaised ? <HiHand size={24} /> : <HiOutlineHand size={24} />}
+          </Button>
+
+          <div style={{ width: '2px', background: 'var(--border-default)', margin: '0 8px' }} />
+
+          {isHost && (
+            <Button 
+              variant="outline" 
+              onClick={adminMuteAll}
+              style={{ width: 56, height: 56, borderRadius: '50%', padding: 0, color: 'var(--color-warning)' }}
+              title="Admin: Mute All Participants"
+            >
+              <HiVolumeOff size={24} />
+            </Button>
+          )}
+
+          <Button 
+            variant={isRecording ? "danger" : "outline"} 
+            onClick={toggleRecording}
+            style={{ width: 56, height: 56, borderRadius: '50%', padding: 0 }}
+            title={isRecording ? "Stop Recording" : "Record Meeting"}
+          >
+            {isRecording ? <HiStop size={24} /> : <HiRecord size={24} />}
           </Button>
 
           <Button 
@@ -226,7 +334,7 @@ export default function MeetingPage() {
         </div>
       </div>
 
-          {/* Chat Panel Side Drawer */}
+      {/* Chat Panel Side Drawer */}
       {isChatOpen && (
         <ChatPanel 
           messages={messages}

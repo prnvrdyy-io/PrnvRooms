@@ -252,6 +252,12 @@ a:hover { color: var(--color-accent); }
   to { transform: rotate(360deg); }
 }
 
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 @keyframes gradient-shift {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
@@ -262,6 +268,7 @@ a:hover { color: var(--color-accent); }
 .animate-slide-in  { animation: slideInRight var(--transition-slow) ease both; }
 .animate-pulse-glow{ animation: pulse-glow 3s ease-in-out infinite; }
 .animate-spin      { animation: spin 1s linear infinite; }
+.animate-pulse     { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
 /* Gradient text */
 .gradient-text {

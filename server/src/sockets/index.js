@@ -84,6 +84,21 @@ const initSocketIO = (httpServer) => {
         timestamp: new Date().toISOString(),
       });
     });
+
+    // Hand Raising
+    socket.on('hand-toggle', ({ roomId, isRaised }) => {
+      // Broadcast to everyone else in the room
+      socket.to(roomId).emit('hand-toggle', {
+        socketId: socket.id,
+        isRaised
+      });
+    });
+
+    // Admin Controls
+    socket.on('admin-mute-all', ({ roomId }) => {
+      // Broadcast a force-mute command to everyone else in the room
+      socket.to(roomId).emit('force-mute');
+    });
   });
 
   return io;
