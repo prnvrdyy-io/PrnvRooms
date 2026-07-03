@@ -1,63 +1,48 @@
 /**
- * Spinner Component
- * A lightweight, accessible loading indicator using a pure CSS animation.
- * Used inline within Button (isLoading) and as a standalone page loader.
+ * Spinner — PrnvRooms Design System
  */
-
-export function Spinner({ size = 20, color = 'currentColor', style = {} }) {
+export function Spinner({ size = 20, color = 'currentColor' }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       className="animate-spin"
       aria-label="Loading"
       role="status"
-      style={style}
     >
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        stroke={color}
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray="31.416"
-        strokeDashoffset="10"
-        opacity="0.25"
-      />
-      <path
-        d="M12 2a10 10 0 0 1 10 10"
-        stroke={color}
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   );
 }
 
-/**
- * Full-page loading overlay
- */
 export function PageLoader({ message = 'Loading...' }) {
   return (
     <div
       style={{
-        position: 'fixed',
-        inset: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        minHeight: '100vh',
         gap: 16,
-        background: 'var(--bg-base)',
-        zIndex: 'var(--z-modal)',
+        background: 'var(--bg-default)',
       }}
     >
-      <Spinner size={40} color="var(--color-primary)" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{message}</p>
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: '50%',
+        border: '3px solid var(--border-default)',
+        borderTopColor: 'var(--color-primary)',
+        animation: 'spin 0.7s linear infinite',
+      }} />
+      <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>{message}</p>
     </div>
   );
 }

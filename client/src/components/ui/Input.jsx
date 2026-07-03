@@ -1,22 +1,12 @@
 /**
- * Input Component
+ * Input — PrnvRooms Design System
  *
- * Wraps a <label>, <input> (or <textarea>), and error message into a
- * single composable unit. This prevents the common mistake of having
- * labels and inputs disconnected in the DOM — critical for accessibility.
- *
- * Props:
- *  label       — Field label text
- *  error       — Error string (shows red border + message)
- *  hint        — Helper text below the input
- *  leftIcon    — React element shown inside left side of input
- *  rightElement — React element on the right (e.g. show/hide password button)
- *  multiline   — Renders <textarea> instead of <input>
- *  rows        — textarea rows (default 4)
- *  ...rest     — forwarded to <input> / <textarea>
+ * Clean, accessible input with icon support, error states, and hints.
+ * Updated to use Lucide React icons and new design system tokens.
  */
 
 import { forwardRef } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 export const Input = forwardRef(function Input(
   {
@@ -29,23 +19,15 @@ export const Input = forwardRef(function Input(
     rows = 4,
     id,
     style = {},
+    className = '',
     ...rest
   },
   ref
 ) {
   const inputId = id || `input-${Math.random().toString(36).slice(2, 7)}`;
 
-  const inputStyle = {
-    paddingLeft: leftIcon ? '42px' : undefined,
-    paddingRight: rightElement ? '48px' : undefined,
-    borderColor: error ? 'var(--color-danger)' : undefined,
-    boxShadow: error ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : undefined,
-    ...style,
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-      {/* Label */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', ...style }}>
       {label && (
         <label
           htmlFor={inputId}
@@ -53,53 +35,57 @@ export const Input = forwardRef(function Input(
             fontSize: 13,
             fontWeight: 600,
             color: 'var(--text-secondary)',
-            letterSpacing: '0.02em',
+            letterSpacing: '0.01em',
           }}
         >
           {label}
         </label>
       )}
 
-      {/* Input wrapper */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        {/* Left icon */}
         {leftIcon && (
           <span
             style={{
               position: 'absolute',
-              left: 14,
+              left: 12,
               color: error ? 'var(--color-danger)' : 'var(--text-muted)',
-              fontSize: 16,
               display: 'flex',
               alignItems: 'center',
               pointerEvents: 'none',
+              zIndex: 1,
             }}
           >
             {leftIcon}
           </span>
         )}
 
-        {/* Input or Textarea */}
         {multiline ? (
           <textarea
             ref={ref}
             id={inputId}
-            className="input"
+            className={`input ${error ? 'input-error' : ''} ${className}`}
             rows={rows}
-            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
+            style={{
+              paddingLeft: leftIcon ? '42px' : undefined,
+              paddingRight: rightElement ? '48px' : undefined,
+              resize: 'vertical',
+              lineHeight: 1.6,
+            }}
             {...rest}
           />
         ) : (
           <input
             ref={ref}
             id={inputId}
-            className="input"
-            style={inputStyle}
+            className={`input ${error ? 'input-error' : ''} ${className}`}
+            style={{
+              paddingLeft: leftIcon ? '42px' : undefined,
+              paddingRight: rightElement ? '48px' : undefined,
+            }}
             {...rest}
           />
         )}
 
-        {/* Right element (e.g. show-password icon) */}
         {rightElement && (
           <span
             style={{
@@ -107,6 +93,7 @@ export const Input = forwardRef(function Input(
               right: 12,
               display: 'flex',
               alignItems: 'center',
+              zIndex: 1,
             }}
           >
             {rightElement}
@@ -114,16 +101,24 @@ export const Input = forwardRef(function Input(
         )}
       </div>
 
-      {/* Error message */}
       {error && (
-        <span style={{ fontSize: 12, color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          ⚠ {error}
+        <span
+          style={{
+            fontSize: 12,
+            color: 'var(--color-danger)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontWeight: 500,
+          }}
+        >
+          <AlertCircle size={12} />
+          {error}
         </span>
       )}
 
-      {/* Hint */}
       {!error && hint && (
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{hint}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{hint}</span>
       )}
     </div>
   );

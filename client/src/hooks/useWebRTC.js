@@ -93,13 +93,25 @@ export function useWebRTC(roomId, options = {}) {
 
     // Handle incoming remote video track
     pc.ontrack = (event) => {
-      const remoteStream = event.streams[0];
       setRemoteStreams(prev => {
-        // If stream already exists, don't add it again
-        if (prev.find(s => s.socketId === remoteSocketId)) {
-          return prev;
+        const existing = prev.find(s => s.socketId === remoteSocketId);
+        
+        // Ensure we always have a stream, even if event.streams is empty
+        const trackStream = event.streams && event.streams[0] 
+          ? event.streams[0] 
+          : new MediaStream([event.track]);
+
+        if (existing) {
+          // If stream already exists, make sure the new track is added
+          if (!existing.stream.getTracks().includes(event.track)) {
+            existing.stream.addTrack(event.track);
+            // Create a NEW MediaStream reference to force React VideoPlayer to re-run its useEffect
+            existing.stream = new MediaStream(existing.stream.getTracks());
+          }
+          return [...prev];
         }
-        return [...prev, { socketId: remoteSocketId, stream: remoteStream, username: remoteUsername || 'Guest', isHandRaised: false }];
+
+        return [...prev, { socketId: remoteSocketId, stream: trackStream, username: remoteUsername || 'Guest', isHandRaised: false }];
       });
     };
 

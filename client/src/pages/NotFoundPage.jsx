@@ -1,113 +1,87 @@
 /**
- * 404 Not Found Page
- * Shown when a user navigates to a route that doesn't exist.
+ * NotFoundPage — PrnvRooms
+ *
+ * Premium 404 page.
  */
 
 import { Link } from 'react-router-dom';
-import { HiArrowLeft, HiVideoCamera } from 'react-icons/hi';
+import { Home, ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function NotFoundPage() {
   return (
     <div
       style={{
         minHeight: '100vh',
+        background: 'var(--bg-default)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'center',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden',
+        padding: 24,
+        fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Background glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '30%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 600,
-          height: 600,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Logo */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 48,
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
+        style={{ textAlign: 'center', maxWidth: 480 }}
       >
-        <HiVideoCamera style={{ color: 'var(--color-primary)', fontSize: 24 }} />
-        <span
+        {/* 404 */}
+        <p
           style={{
-            fontSize: '1.25rem',
-            fontWeight: 800,
-            fontFamily: "'Space Grotesk', sans-serif",
-            background: 'linear-gradient(135deg, #fff, var(--color-primary-light))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            fontSize: 120,
+            fontWeight: 900,
+            color: 'var(--border-default)',
+            lineHeight: 1,
+            letterSpacing: '-0.05em',
+            marginBottom: 16,
+            userSelect: 'none',
           }}
         >
-          NexMeet
-        </span>
-      </div>
+          404
+        </p>
 
-      {/* 404 Text */}
-      <div
-        className="gradient-text animate-fade-in"
-        style={{
-          fontSize: 'clamp(6rem, 20vw, 12rem)',
-          fontWeight: 900,
-          lineHeight: 1,
-          marginBottom: 16,
-          fontFamily: "'Space Grotesk', sans-serif",
-        }}
-      >
-        404
-      </div>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.03em',
+            marginBottom: 12,
+          }}
+        >
+          Page not found
+        </h1>
 
-      <h1
-        className="animate-fade-in"
-        style={{
-          fontSize: 'clamp(1.25rem, 3vw, 2rem)',
-          fontWeight: 700,
-          marginBottom: 16,
-          animationDelay: '100ms',
-        }}
-      >
-        Page Not Found
-      </h1>
+        <p
+          style={{
+            fontSize: 16,
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6,
+            marginBottom: 40,
+          }}
+        >
+          The page you're looking for doesn't exist or has been moved.
+        </p>
 
-      <p
-        className="animate-fade-in"
-        style={{
-          color: 'var(--text-secondary)',
-          maxWidth: 400,
-          lineHeight: 1.7,
-          marginBottom: 40,
-          animationDelay: '200ms',
-        }}
-      >
-        The page you're looking for doesn't exist or has been moved.
-        Let's get you back on track.
-      </p>
-
-      <Link to="/" className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-        <button className="btn btn-primary" style={{ fontSize: '15px', padding: '12px 28px' }}>
-          <HiArrowLeft />
-          Back to Home
-        </button>
-      </Link>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button
+            onClick={() => window.history.back()}
+            className="btn btn-outline btn-lg"
+          >
+            <ArrowLeft size={16} />
+            Go back
+          </button>
+          <Link to="/">
+            <button className="btn btn-primary btn-lg">
+              <Home size={16} />
+              Home
+            </button>
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
 }

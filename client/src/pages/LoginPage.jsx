@@ -1,39 +1,32 @@
 /**
- * Login Page
+ * Login Page — PrnvRooms
  *
- * Features:
- * - Email + password form with validation
- * - Show/hide password toggle
- * - Loading state with spinner
- * - Error handling from API
- * - Redirect-aware: goes back to the original URL after login
- * - Link to Register
+ * Clean, minimal form on the right panel of the split AuthLayout.
+ * Business logic unchanged — only visual redesign.
  */
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiVideoCamera } from 'react-icons/hi';
+import { Mail, Lock, Eye, EyeOff, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const location = useLocation();
-  const redirectTo = location.state?.from || '/dashboard';
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData]     = useState({ email: '', password: '' });
+  const [errors, setErrors]         = useState({});
+  const [isLoading, setIsLoading]   = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError]     = useState('');
 
-  // ─── Handlers ─────────────────────────────────────────────────────────
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear field error on change
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
     if (apiError) setApiError('');
   };
@@ -50,16 +43,12 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setIsLoading(true);
     setApiError('');
-
     try {
       await login(formData);
-      // AuthContext handles the redirect
     } catch (err) {
-      const message = err.response?.data?.message || 'Login failed. Please try again.';
-      setApiError(message);
+      setApiError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -67,138 +56,144 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.21, 0.47, 0.32, 0.98] }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 36 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              color: 'var(--text-primary)',
+              marginBottom: 8,
+            }}
+          >
+            Welcome back
+          </h1>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Sign in to continue to PrnvRooms
+          </p>
+        </div>
+
+        {/* API Error */}
+        {apiError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-danger-light)',
+              border: '1px solid #FECACA',
+              color: '#B91C1C',
+              fontSize: 13,
+              fontWeight: 500,
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            ⚠ {apiError}
+          </motion.div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} noValidate>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <Input
+              label="Email address"
+              type="email"
+              name="email"
+              id="login-email"
+              placeholder="you@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              leftIcon={<Mail size={16} />}
+              autoComplete="email"
+              autoFocus
+            />
+
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              id="login-password"
+              placeholder="Your password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              leftIcon={<Lock size={16} />}
+              autoComplete="current-password"
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 4,
+                    borderRadius: 4,
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isLoading}
+              fullWidth
+              size="lg"
+              style={{ marginTop: 4 }}
+            >
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </div>
+        </form>
+
+        {/* Divider */}
         <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: 12,
+            margin: '28px 0',
           }}
         >
-          <HiVideoCamera style={{ color: '#fff', fontSize: 18 }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
         </div>
-        <span
-          style={{
-            fontSize: '1.15rem',
-            fontWeight: 800,
-            fontFamily: "'Space Grotesk', sans-serif",
-            background: 'linear-gradient(135deg, #fff, var(--color-primary-light))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          NexMeet
-        </span>
-      </div>
 
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: 6 }}>Welcome back</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          Sign in to continue to your meetings
-        </p>
-      </div>
-
-      {/* API Error Banner */}
-      {apiError && (
-        <div
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.3)',
-            color: '#f87171',
-            fontSize: 14,
-            marginBottom: 20,
-          }}
-        >
-          ⚠ {apiError}
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} noValidate>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <Input
-            label="Email address"
-            type="email"
-            name="email"
-            id="login-email"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            error={errors.email}
-            leftIcon={<HiMail />}
-            autoComplete="email"
-            autoFocus
-          />
-
-          <Input
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            name="password"
-            id="login-password"
-            placeholder="Your password"
-            value={formData.password}
-            onChange={handleChange}
-            error={errors.password}
-            leftIcon={<HiLockClosed />}
-            autoComplete="current-password"
-            rightElement={
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: 4,
-                }}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <HiEyeOff fontSize={16} /> : <HiEye fontSize={16} />}
-              </button>
-            }
-          />
-
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isLoading}
-            fullWidth
-            style={{ marginTop: 4, padding: '13px' }}
+        {/* Footer link */}
+        <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
+          Don't have an account?{' '}
+          <Link
+            to="/register"
+            style={{
+              color: 'var(--color-primary)',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
           >
-            {isLoading ? 'Signing in…' : 'Sign In'}
-          </Button>
-        </div>
-      </form>
-
-      {/* Footer links */}
-      <div
-        style={{
-          marginTop: 24,
-          textAlign: 'center',
-          fontSize: 14,
-          color: 'var(--text-muted)',
-        }}
-      >
-        Don't have an account?{' '}
-        <Link
-          to="/register"
-          style={{ color: 'var(--color-primary-light)', fontWeight: 600 }}
-        >
-          Sign up free
-        </Link>
-      </div>
+            Create one free
+          </Link>
+        </p>
+      </motion.div>
     </AuthLayout>
   );
 }

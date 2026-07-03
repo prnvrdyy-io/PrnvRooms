@@ -43,12 +43,16 @@ const startServer = async () => {
   // Ensures in-flight requests complete and DB connection closes cleanly
   const gracefulShutdown = (signal) => {
     console.log(`\n⚡ ${signal} received — shutting down gracefully...`);
-    server.close(() => {
+    server.close(async () => {
       console.log('✅ HTTP server closed');
-      require('mongoose').connection.close(false, () => {
+      try {
+        await require('mongoose').connection.close(false);
         console.log('✅ MongoDB connection closed');
+      } catch (err) {
+        console.error('❌ Error closing MongoDB connection:', err.message);
+      } finally {
         process.exit(0);
-      });
+      }
     });
   };
 

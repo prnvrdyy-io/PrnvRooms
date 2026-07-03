@@ -1,34 +1,27 @@
 /**
- * Button Component
- *
- * A single component that handles every button variant in the design system.
- * Using a single `variant` prop instead of multiple boolean flags avoids
- * impossible states (e.g. variant="primary" AND variant="danger" simultaneously).
- *
- * Props:
- *  variant   — 'primary' | 'outline' | 'ghost' | 'danger' | 'success'
- *  size      — 'sm' | 'md' | 'lg'
- *  isLoading — shows spinner, disables click
- *  leftIcon  — React element (icon) before the label
- *  rightIcon — React element (icon) after the label
- *  fullWidth — stretches to fill container
- *  ...rest   — forwarded to <button> (onClick, disabled, type, etc.)
+ * Button — PrnvRooms Design System
+ * 
+ * Clean, professional button component matching the new light SaaS design.
+ * Uses CSS classes from index.css for all styling.
  */
 
 import { Spinner } from './Spinner';
 
-const VARIANT_CLASSES = {
-  primary: 'btn-primary',
-  outline: 'btn-outline',
-  ghost:   'btn-ghost',
-  danger:  'btn-danger',
-  success: 'btn-success',
+const VARIANT_MAP = {
+  primary:   'btn-primary',
+  secondary: 'btn-secondary',
+  outline:   'btn-outline',
+  ghost:     'btn-ghost',
+  danger:    'btn-danger',
+  success:   'btn-success',
 };
 
-const SIZE_STYLES = {
-  sm: { padding: '6px 14px', fontSize: '13px', gap: '6px' },
-  md: { padding: '10px 20px', fontSize: '14px', gap: '8px' },
-  lg: { padding: '13px 28px', fontSize: '16px', gap: '10px' },
+const SIZE_MAP = {
+  xs: 'btn-sm',
+  sm: 'btn-sm',
+  md: 'btn-md',
+  lg: 'btn-lg',
+  xl: 'btn-xl',
 };
 
 export function Button({
@@ -39,28 +32,31 @@ export function Button({
   leftIcon,
   rightIcon,
   fullWidth = false,
+  iconOnly = false,
   style = {},
   className = '',
   ...rest
 }) {
+  const variantClass = VARIANT_MAP[variant] || 'btn-primary';
+  const sizeClass    = SIZE_MAP[size] || 'btn-md';
+  const widthClass   = fullWidth ? 'btn-full' : '';
+  const iconClass    = iconOnly ? 'btn-icon' : '';
+
   return (
     <button
-      className={`btn ${VARIANT_CLASSES[variant] || 'btn-primary'} ${className}`}
+      className={`btn ${variantClass} ${sizeClass} ${widthClass} ${iconClass} ${className}`}
       disabled={isLoading || rest.disabled}
-      style={{
-        ...SIZE_STYLES[size],
-        width: fullWidth ? '100%' : undefined,
-        ...style,
-      }}
+      style={style}
       {...rest}
     >
       {isLoading ? (
-        <Spinner size={size === 'sm' ? 14 : 16} />
+        <Spinner size={size === 'sm' ? 12 : size === 'lg' ? 18 : 14} />
       ) : (
         leftIcon && <span style={{ display: 'flex', alignItems: 'center' }}>{leftIcon}</span>
       )}
-      {children}
-      {!isLoading && rightIcon && (
+      {!iconOnly && children}
+      {iconOnly && !isLoading && (leftIcon || children)}
+      {!isLoading && !iconOnly && rightIcon && (
         <span style={{ display: 'flex', alignItems: 'center' }}>{rightIcon}</span>
       )}
     </button>
