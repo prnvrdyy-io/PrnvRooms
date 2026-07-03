@@ -74,8 +74,16 @@ const initSocketIO = (httpServer) => {
       });
     });
 
-    // --- Chat & Hand Raising (For later phases) ---
-    // We can add these events easily later!
+    // --- Chat & Collaboration ---
+    
+    // Relay chat message to everyone in the room
+    socket.on('chat-message', ({ roomId, message, sender }) => {
+      socket.to(roomId).emit('chat-message', {
+        message,
+        sender,
+        timestamp: new Date().toISOString(),
+      });
+    });
   });
 
   return io;

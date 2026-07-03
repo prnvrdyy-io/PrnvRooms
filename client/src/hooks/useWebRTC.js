@@ -35,6 +35,10 @@ export function useWebRTC(roomId) {
   // Store remote streams in an array of objects: { socketId, stream, username }
   const [remoteStreams, setRemoteStreams] = useState([]);
   
+  // Screen Share state
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const screenStreamRef = useRef(null);
+  
   // Refs to keep track of Peer Connections without triggering re-renders
   const peerConnections = useRef({}); // { [socketId]: RTCPeerConnection }
   const localStreamRef = useRef(null);
@@ -61,9 +65,10 @@ export function useWebRTC(roomId) {
     const pc = new RTCPeerConnection(ICE_SERVERS);
 
     // Add our local tracks to the connection
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => {
-        pc.addTrack(track, localStreamRef.current);
+    const streamToShare = isScreenSharing ? screenStreamRef.current : localStreamRef.current;
+    if (streamToShare) {
+      streamToShare.getTracks().forEach(track => {
+        pc.addTrack(track, streamToShare);
       });
     }
 
@@ -92,7 +97,7 @@ export function useWebRTC(roomId) {
     // Store it in our ref
     peerConnections.current[remoteSocketId] = pc;
     return pc;
-  }, [socket]);
+  }, [socket, isScreenSharing]);
 
   // 2. Main WebRTC setup effect
   useEffect(() => {
@@ -192,6 +197,9 @@ export function useWebRTC(roomId) {
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(track => track.stop());
+      }
       
       // Close all peer connections
       Object.values(peerConnections.current).forEach(pc => pc.close());
@@ -212,7 +220,7 @@ export function useWebRTC(roomId) {
   };
 
   const toggleVideo = () => {
-    if (localStream) {
+    if (localStream && !isScreenSharing) {
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
@@ -222,10 +230,58 @@ export function useWebRTC(roomId) {
     return false;
   };
 
+  // --- Screen Sharing Logic using replaceTrack ---
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      // Stop Screen Share
+      screenStreamRef.current?.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
+      
+      const videoTrack = localStreamRef.current?.getVideoTracks()[0];
+      if (videoTrack) {
+        // Replace screen track back with camera track on all peers
+        Object.values(peerConnections.current).forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) sender.replaceTrack(videoTrack);
+        });
+      }
+      setLocalStream(localStreamRef.current);
+      setIsScreenSharing(false);
+    } else {
+      // Start Screen Share
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStreamRef.current = screenStream;
+        
+        const screenTrack = screenStream.getVideoTracks()[0];
+        
+        // Listen for user stopping screen share via browser UI (e.g. Chrome's "Stop sharing" button)
+        screenTrack.onended = () => {
+          toggleScreenShare(); // recursive call to stop it cleanly
+        };
+
+        // Replace camera track with screen track on all peers
+        Object.values(peerConnections.current).forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) sender.replaceTrack(screenTrack);
+        });
+        
+        // Update local UI to show the screen
+        setLocalStream(screenStream);
+        setIsScreenSharing(true);
+      } catch (err) {
+        console.error('Error sharing screen:', err);
+        // User likely hit "Cancel" on the prompt
+      }
+    }
+  };
+
   return {
     localStream,
     remoteStreams,
     toggleAudio,
-    toggleVideo
+    toggleVideo,
+    toggleScreenShare,
+    isScreenSharing
   };
 }
