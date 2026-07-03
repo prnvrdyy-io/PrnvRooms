@@ -22,11 +22,9 @@ import LandingPage    from './pages/LandingPage';
 import LoginPage      from './pages/LoginPage';
 import RegisterPage   from './pages/RegisterPage';
 import NotFoundPage   from './pages/NotFoundPage';
+import DashboardPage  from './pages/DashboardPage';
 
 // Placeholder pages — replaced in their respective phases
-const DashboardPlaceholder = () => (
-  <div className="placeholder-page">Dashboard — coming in Phase 4</div>
-);
 const MeetingPlaceholder = () => (
   <div className="placeholder-page">Meeting Room — coming in Phase 5</div>
 );
@@ -83,7 +81,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPlaceholder />
+                <DashboardPage />
               </ProtectedRoute>
             }
           />

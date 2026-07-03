@@ -16,6 +16,7 @@ const path = require('path');
 
 const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
+const meetingRoutes = require('./routes/meetingRoutes');
 const { notFound } = require('./middleware/notFound');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -60,6 +61,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ─── API Routes ────────────────────────────────────────────────────────────
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/meetings', meetingRoutes);
 
 // Additional routes will be mounted here in later phases:
 // app.use('/api/meetings', meetingRoutes);
