@@ -70,6 +70,12 @@ export function useWebRTC(roomId) {
       streamToShare.getTracks().forEach(track => {
         pc.addTrack(track, streamToShare);
       });
+    } else {
+      // If we have no local media (e.g. permission denied), we must explicitly tell
+      // the peer connection that we want to receive audio and video, otherwise
+      // it won't negotiate a connection that can receive media!
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
     }
 
     // Handle incoming ICE candidates from STUN
@@ -103,18 +109,9 @@ export function useWebRTC(roomId) {
   useEffect(() => {
     if (!socket || !roomId) return;
 
-    // We join the room *after* getting user media, so we only emit 'user-connected'
-    // when we are ready to receive offers.
-    const setupRoom = async () => {
-      const stream = await initLocalStream();
-      if (stream) {
-        socket.emit('join-room', { roomId, user });
-      }
-    };
-    setupRoom();
+    let isMounted = true;
 
     // -- Event: A new user connected --
-    // We (existing user) create an offer and send it to them
     const handleUserConnected = async ({ socketId, username }) => {
       console.log(`[WebRTC] User connected: ${username} (${socketId})`);
       const pc = createPeerConnection(socketId, username);
@@ -129,10 +126,9 @@ export function useWebRTC(roomId) {
     };
 
     // -- Event: Received an offer --
-    // We (new user) receive an offer, set it as remote description, create answer
     const handleReceiveOffer = async ({ offer, from }) => {
       console.log(`[WebRTC] Received offer from ${from}`);
-      const pc = createPeerConnection(from, 'User'); // We don't have username yet in this simple flow, can improve later
+      const pc = createPeerConnection(from, 'User');
       
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -179,13 +175,26 @@ export function useWebRTC(roomId) {
       setRemoteStreams(prev => prev.filter(s => s.socketId !== socketId));
     };
 
-    socket.on('user-connected', handleUserConnected);
-    socket.on('offer', handleReceiveOffer);
-    socket.on('answer', handleReceiveAnswer);
-    socket.on('ice-candidate', handleReceiveIceCandidate);
-    socket.on('user-disconnected', handleUserDisconnected);
+    // We join the room *after* attempting to get user media.
+    const setupRoom = async () => {
+      await initLocalStream(); // Wait for user to allow/deny camera
+      if (!isMounted) return;
+
+      // Attach listeners ONLY after we have our local media (or know we don't have it)
+      // This prevents race conditions where we receive an offer before our camera is ready!
+      socket.on('user-connected', handleUserConnected);
+      socket.on('offer', handleReceiveOffer);
+      socket.on('answer', handleReceiveAnswer);
+      socket.on('ice-candidate', handleReceiveIceCandidate);
+      socket.on('user-disconnected', handleUserDisconnected);
+
+      socket.emit('join-room', { roomId, user });
+    };
+
+    setupRoom();
 
     return () => {
+      isMounted = false;
       // Cleanup WebRTC connections on unmount
       socket.off('user-connected', handleUserConnected);
       socket.off('offer', handleReceiveOffer);

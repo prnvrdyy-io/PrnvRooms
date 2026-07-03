@@ -7,15 +7,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { HiPaperAirplane, HiX } from 'react-icons/hi';
-import { useSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
-export function ChatPanel({ roomId, onClose }) {
-  const socket = useSocket();
+export function ChatPanel({ messages, onSendMessage, onClose }) {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -28,39 +25,11 @@ export function ChatPanel({ roomId, onClose }) {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessage = (data) => {
-      setMessages((prev) => [...prev, data]);
-    };
-
-    socket.on('chat-message', handleMessage);
-
-    return () => {
-      socket.off('chat-message', handleMessage);
-    };
-  }, [socket]);
-
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!inputValue.trim() || !socket) return;
+    if (!inputValue.trim()) return;
 
-    const messageData = {
-      roomId,
-      message: inputValue.trim(),
-      sender: user.username,
-    };
-
-    // Emit to server
-    socket.emit('chat-message', messageData);
-
-    // Add locally immediately for snappy UX
-    setMessages((prev) => [
-      ...prev,
-      { ...messageData, timestamp: new Date().toISOString(), isLocal: true }
-    ]);
-    
+    onSendMessage(inputValue);
     setInputValue('');
   };
 

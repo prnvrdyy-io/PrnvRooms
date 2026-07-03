@@ -19,6 +19,7 @@ import {
 import toast from 'react-hot-toast';
 
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { useChat } from '@/hooks/useChat';
 import { meetingService } from '@/services/meetingService';
 import { PageLoader } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
@@ -71,7 +72,7 @@ export default function MeetingPage() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Initialize WebRTC
+  // Initialize WebRTC and Chat
   const { 
     localStream, 
     remoteStreams, 
@@ -80,6 +81,8 @@ export default function MeetingPage() {
     toggleScreenShare, 
     isScreenSharing 
   } = useWebRTC(meetingId);
+
+  const { messages, sendMessage, unreadCount, markAsRead } = useChat(meetingId);
 
   // 1. Verify meeting exists before showing the room
   useEffect(() => {
@@ -181,11 +184,33 @@ export default function MeetingPage() {
 
           <Button 
             variant={isChatOpen ? "primary" : "outline"} 
-            onClick={() => setIsChatOpen(!isChatOpen)}
-            style={{ width: 56, height: 56, borderRadius: '50%', padding: 0 }}
+            onClick={() => {
+              setIsChatOpen(!isChatOpen);
+              if (!isChatOpen) markAsRead();
+            }}
+            style={{ width: 56, height: 56, borderRadius: '50%', padding: 0, position: 'relative' }}
             title="Chat"
           >
             <HiChatAlt2 size={24} />
+            {!isChatOpen && unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                background: 'var(--color-danger)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: 18,
+                height: 18,
+                fontSize: '0.7rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold'
+              }}>
+                {unreadCount}
+              </span>
+            )}
           </Button>
 
           <div style={{ width: '2px', background: 'var(--border-default)', margin: '0 8px' }} />
@@ -201,10 +226,11 @@ export default function MeetingPage() {
         </div>
       </div>
 
-      {/* Chat Panel Side Drawer */}
+          {/* Chat Panel Side Drawer */}
       {isChatOpen && (
         <ChatPanel 
-          roomId={meetingId} 
+          messages={messages}
+          onSendMessage={sendMessage}
           onClose={() => setIsChatOpen(false)} 
         />
       )}
