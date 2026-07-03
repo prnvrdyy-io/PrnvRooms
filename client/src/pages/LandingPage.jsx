@@ -22,6 +22,7 @@ import {
   HiArrowRight,
   HiStar,
 } from 'react-icons/hi';
+import { Navbar } from '@/components/layout/Navbar';
 
 // ─── Feature Data ──────────────────────────────────────────────────────────
 const FEATURES = [
@@ -80,7 +81,7 @@ const STATS = [
 export default function LandingPage() {
   return (
     <div style={{ overflowX: 'hidden' }}>
-      <Nav />
+      <Navbar user={null} />
       <HeroSection />
       <StatsBar />
       <FeaturesSection />
