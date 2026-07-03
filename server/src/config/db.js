@@ -15,11 +15,8 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // Fail fast if Atlas is unreachable
+      serverSelectionTimeoutMS: 8000,
       socketTimeoutMS: 45000,
-      // Node 24 + OpenSSL compatibility fix for MongoDB Atlas TLS handshake
-      tls: true,
-      tlsAllowInvalidCertificates: false,
     });
 
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);

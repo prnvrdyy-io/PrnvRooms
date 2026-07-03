@@ -1,30 +1,38 @@
 /**
- * Root Application Component
+ * Root Application Component — Updated for Phase 3
  *
- * This is the composition root — it wires together:
- * - React Router (BrowserRouter + Routes)
- * - Global Context Providers (added per phase)
- * - Toast notifications (react-hot-toast)
+ * Provider hierarchy (outer to inner):
+ *  BrowserRouter        — React Router context
+ *    AuthProvider       — global auth state (needs Router for useNavigate)
+ *      Routes + Guards  — route definitions
  *
- * Route structure:
- *  /               → Landing page (public)
- *  /login          → Login page (public)
- *  /register       → Register page (public)
- *  /dashboard      → Dashboard (protected)
- *  /meeting/:id    → Meeting room (protected)
- *  /profile        → User profile (protected)
- *  *               → 404 Not Found
- *
- * Protected routes are implemented in Phase 3 alongside auth context.
- * For now they render placeholder components so routing is exercisable.
+ * Why AuthProvider is inside BrowserRouter?
+ * AuthContext uses useNavigate() to redirect after login/logout.
+ * useNavigate() requires a Router context — so AuthProvider must be nested inside BrowserRouter.
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-// Pages — stubs for Phase 1, replaced progressively through phases
-import LandingPage from './pages/LandingPage';
-import NotFoundPage from './pages/NotFoundPage';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute, PublicRoute } from './routes/RouteGuards';
+
+// Pages
+import LandingPage    from './pages/LandingPage';
+import LoginPage      from './pages/LoginPage';
+import RegisterPage   from './pages/RegisterPage';
+import NotFoundPage   from './pages/NotFoundPage';
+
+// Placeholder pages — replaced in their respective phases
+const DashboardPlaceholder = () => (
+  <div className="placeholder-page">Dashboard — coming in Phase 4</div>
+);
+const MeetingPlaceholder = () => (
+  <div className="placeholder-page">Meeting Room — coming in Phase 5</div>
+);
+const ProfilePlaceholder = () => (
+  <div className="placeholder-page">Profile — coming in Phase 3 extension</div>
+);
 
 function App() {
   return (
@@ -41,32 +49,66 @@ function App() {
             borderRadius: '10px',
             fontSize: '14px',
           },
-          success: {
-            iconTheme: { primary: '#22c55e', secondary: '#1e293b' },
-          },
-          error: {
-            iconTheme: { primary: '#ef4444', secondary: '#1e293b' },
-          },
+          success: { iconTheme: { primary: '#22c55e', secondary: '#1e293b' } },
+          error:   { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
         }}
       />
 
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
+      {/* AuthProvider must be inside BrowserRouter (needs useNavigate) */}
+      <AuthProvider>
+        <Routes>
+          {/* ── Public ─────────────────────────────────────────────────── */}
+          <Route path="/" element={<LandingPage />} />
 
-        {/* Auth Routes — full pages built in Phase 3 */}
-        <Route path="/login" element={<div className="placeholder-page">Login — Phase 3</div>} />
-        <Route path="/register" element={<div className="placeholder-page">Register — Phase 3</div>} />
+          {/* Auth pages — redirect to dashboard if already logged in */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
 
-        {/* Protected Routes — guards added in Phase 3 */}
-        <Route path="/dashboard" element={<div className="placeholder-page">Dashboard — Phase 4</div>} />
-        <Route path="/meeting/:meetingId" element={<div className="placeholder-page">Meeting — Phase 5</div>} />
-        <Route path="/profile" element={<div className="placeholder-page">Profile — Phase 3</div>} />
+          {/* ── Protected ──────────────────────────────────────────────── */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPlaceholder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meeting/:meetingId"
+            element={
+              <ProtectedRoute>
+                <MeetingPlaceholder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePlaceholder />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Fallback */}
-        <Route path="/404" element={<NotFoundPage />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
-      </Routes>
+          {/* ── Fallback ───────────────────────────────────────────────── */}
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

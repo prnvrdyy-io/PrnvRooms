@@ -15,6 +15,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const healthRoutes = require('./routes/healthRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { notFound } = require('./middleware/notFound');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -58,9 +59,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ─── API Routes ────────────────────────────────────────────────────────────
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 // Additional routes will be mounted here in later phases:
-// app.use('/api/auth',     authRoutes);
 // app.use('/api/meetings', meetingRoutes);
 // app.use('/api/messages', messageRoutes);
 // app.use('/api/files',    fileRoutes);

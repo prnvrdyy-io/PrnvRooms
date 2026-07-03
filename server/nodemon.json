@@ -4,6 +4,7 @@
   "ignore": ["src/tests/*", "uploads/*"],
   "exec": "node src/server.js",
   "env": {
-    "NODE_ENV": "development"
+    "NODE_ENV": "development",
+    "NODE_OPTIONS": "--openssl-legacy-provider"
   }
 }

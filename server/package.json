@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon",
-    "start": "node src/server.js",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider node src/server.js",
     "test": "echo \"Tests coming in Phase 13\" && exit 0"
   },
   "keywords": ["webrtc", "socket.io", "express", "collaboration"],
