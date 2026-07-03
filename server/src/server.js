@@ -15,26 +15,29 @@ require('dotenv').config();
 
 const { validateEnv } = require('./config/env');
 const connectDB = require('./config/db');
+const http = require('http');
 const app = require('./app');
+const { initSocketIO } = require('./sockets');
 
 // Validate env vars before anything else touches process.env
 validateEnv();
 
 const PORT = process.env.PORT || 5000;
 
+// Create HTTP server (required to attach Socket.io)
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocketIO(server);
+
 const startServer = async () => {
   // Connect to MongoDB before accepting any requests
   await connectDB();
 
-  const server = app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     console.log(`📡 Health check: http://localhost:${PORT}/api/health\n`);
   });
-
-  // ─── Socket.io will be wired here in Phase 6 ─────────────────────────
-  // const { Server } = require('socket.io');
-  // const io = new Server(server, { cors: { origin: process.env.CLIENT_URL } });
-  // require('./sockets')(io);
 
   // ─── Graceful Shutdown ─────────────────────────────────────────────────
   // Ensures in-flight requests complete and DB connection closes cleanly

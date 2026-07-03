@@ -15,6 +15,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import { ProtectedRoute, PublicRoute } from './routes/RouteGuards';
 
 // Pages
@@ -23,11 +24,9 @@ import LoginPage      from './pages/LoginPage';
 import RegisterPage   from './pages/RegisterPage';
 import NotFoundPage   from './pages/NotFoundPage';
 import DashboardPage  from './pages/DashboardPage';
+import MeetingPage    from './pages/MeetingPage';
 
 // Placeholder pages — replaced in their respective phases
-const MeetingPlaceholder = () => (
-  <div className="placeholder-page">Meeting Room — coming in Phase 5</div>
-);
 const ProfilePlaceholder = () => (
   <div className="placeholder-page">Profile — coming in Phase 3 extension</div>
 );
@@ -54,58 +53,60 @@ function App() {
 
       {/* AuthProvider must be inside BrowserRouter (needs useNavigate) */}
       <AuthProvider>
-        <Routes>
-          {/* ── Public ─────────────────────────────────────────────────── */}
-          <Route path="/" element={<LandingPage />} />
+        <SocketProvider>
+          <Routes>
+            {/* ── Public ─────────────────────────────────────────────────── */}
+            <Route path="/" element={<LandingPage />} />
 
-          {/* Auth pages — redirect to dashboard if already logged in */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <LoginPage />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <RegisterPage />
-              </PublicRoute>
-            }
-          />
+            {/* Auth pages — redirect to dashboard if already logged in */}
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <RegisterPage />
+                </PublicRoute>
+              }
+            />
 
-          {/* ── Protected ──────────────────────────────────────────────── */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/meeting/:meetingId"
-            element={
-              <ProtectedRoute>
-                <MeetingPlaceholder />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePlaceholder />
-              </ProtectedRoute>
-            }
-          />
+            {/* ── Protected ──────────────────────────────────────────────── */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meeting/:meetingId"
+              element={
+                <ProtectedRoute>
+                  <MeetingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePlaceholder />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* ── Fallback ───────────────────────────────────────────────── */}
-          <Route path="/404" element={<NotFoundPage />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
+            {/* ── Fallback ───────────────────────────────────────────────── */}
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
+          </Routes>
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );

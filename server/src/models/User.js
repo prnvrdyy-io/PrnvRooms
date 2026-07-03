@@ -59,12 +59,11 @@ const userSchema = new mongoose.Schema(
 
 // ─── Pre-save Hook: Hash password before saving ───────────────────────────
 // Only runs if the password field was modified (prevents re-hashing on profile updates)
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
 
   const saltRounds = 12; // Higher = slower brute-force, 12 is the industry standard
   this.password = await bcrypt.hash(this.password, saltRounds);
-  next();
 });
 
 // ─── Instance Method: Compare plain password against hash ────────────────
