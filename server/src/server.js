@@ -36,7 +36,7 @@ const startServer = async () => {
 
   server.listen(PORT, () => {
     console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-    console.log(`📡 Health check: http://localhost:${PORT}/api/health\n`);
+    console.log(`📡 Health check available at /api/health\n`);
   });
 
   // ─── Graceful Shutdown ─────────────────────────────────────────────────
