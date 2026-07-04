@@ -25,11 +25,8 @@ import RegisterPage   from './pages/RegisterPage';
 import NotFoundPage   from './pages/NotFoundPage';
 import DashboardPage  from './pages/DashboardPage';
 import MeetingPage    from './pages/MeetingPage';
+import ProfilePage    from './pages/ProfilePage';
 
-// Placeholder pages — replaced in their respective phases
-const ProfilePlaceholder = () => (
-  <div className="placeholder-page">Profile — coming in Phase 3 extension</div>
-);
 
 function App() {
   return (
@@ -100,7 +97,7 @@ function App() {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <ProfilePlaceholder />
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

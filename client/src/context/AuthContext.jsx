@@ -99,7 +99,7 @@ export function AuthProvider({ children }) {
     const res = await authService.register(formData);
     const { user: userData, accessToken, refreshToken } = res.data.data;
     saveSession(userData, accessToken, refreshToken);
-    toast.success(`Welcome to NexMeet, ${userData.username}! 🎉`);
+    toast.success(`Welcome to PrnvRooms, ${userData.username}! 🎉`);
     navigate('/dashboard');
     return userData;
   }, [navigate]);

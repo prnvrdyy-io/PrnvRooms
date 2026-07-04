@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Video, MessageSquare, Monitor, PenTool, FolderOpen,
-  ShieldCheck, ArrowRight, Github, Zap, Users, Check,
+  ShieldCheck, ArrowRight, ExternalLink, Zap, Users, Check,
   ChevronRight, Star
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -770,7 +770,7 @@ function Footer() {
             transition: 'color var(--transition-fast)',
           }}
         >
-          <Github size={16} />
+          <ExternalLink size={16} />
           View on GitHub
         </a>
       </div>

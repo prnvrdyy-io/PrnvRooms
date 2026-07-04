@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    avatarColor: {
+      type: String,
+      default: '#2563EB', // Default blue — matches brand primary
+      match: [/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'],
+    },
     refreshToken: {
       type: String,
       default: null,
