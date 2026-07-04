@@ -99,6 +99,17 @@ const initSocketIO = (httpServer) => {
       // Broadcast a force-mute command to everyone else in the room
       socket.to(roomId).emit('force-mute');
     });
+
+    // Meeting Reactions
+    socket.on('meeting-reaction', ({ roomId, emoji, sender }) => {
+      // Generate a unique ID for the reaction on the backend or pass it through
+      // Actually, we can just pass it through so everyone renders the exact same reaction object
+      socket.to(roomId).emit('meeting-reaction', {
+        emoji,
+        sender,
+        id: Math.random().toString(36).substring(2, 9),
+      });
+    });
   });
 
   return io;

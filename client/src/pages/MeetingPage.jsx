@@ -11,7 +11,7 @@ import {
   Mic, MicOff, Video, VideoOff,
   Monitor, MonitorOff, Hand, MessageSquare,
   PhoneOff, VolumeX, Circle, Square,
-  Users, Wifi, Clock
+  Users, Wifi, Clock, Smile
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,7 @@ import { meetingService } from '@/services/meetingService';
 import { useAuth } from '@/hooks/useAuth';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ChatPanel } from '@/components/meeting/ChatPanel';
+import { useReactions } from '@/hooks/useReactions';
 
 // ─── Video Player ────────────────────────────────────────────────────────────
 const VideoPlayer = ({ stream, isLocal = false, username, isHandRaised = false, isMuted = false }) => {
@@ -183,6 +184,7 @@ export default function MeetingPage() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isChatOpen, setIsChatOpen]         = useState(false);
+  const [isReactionMenuOpen, setIsReactionMenuOpen] = useState(false);
   const [isRecording, setIsRecording]       = useState(false);
   const [elapsed, setElapsed]               = useState(0);
 
@@ -205,6 +207,7 @@ export default function MeetingPage() {
   });
 
   const { messages, sendMessage, unreadCount, markAsRead } = useChat(meetingId);
+  const { reactions, sendReaction } = useReactions(meetingId);
 
   // Meeting verification
   useEffect(() => {
@@ -438,6 +441,34 @@ export default function MeetingPage() {
           ))}
         </div>
 
+        {/* Floating Reactions Overlay */}
+        <div style={{ position: 'absolute', bottom: 100, left: 32, pointerEvents: 'none', zIndex: 50, display: 'flex', flexDirection: 'column-reverse', gap: 8 }}>
+          <AnimatePresence>
+            {reactions.map((r) => (
+              <motion.div
+                key={r.localId}
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -40, scale: 0.8 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                style={{
+                  background: 'rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '8px 16px',
+                  borderRadius: 100,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}
+              >
+                <span style={{ fontSize: 24 }}>{r.emoji}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{r.sender}</span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
         {/* Chat panel */}
         <AnimatePresence>
           {isChatOpen && (
@@ -502,6 +533,66 @@ export default function MeetingPage() {
         >
           {isScreenSharing ? <MonitorOff size={20} /> : <Monitor size={20} />}
         </ControlBtn>
+
+        {/* Reactions */}
+        <div style={{ position: 'relative' }}>
+          <ControlBtn
+            onClick={() => setIsReactionMenuOpen(!isReactionMenuOpen)}
+            title="React"
+            active={isReactionMenuOpen}
+          >
+            <Smile size={20} />
+          </ControlBtn>
+
+          <AnimatePresence>
+            {isReactionMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginBottom: 12,
+                  background: '#161B22',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 8,
+                  display: 'flex',
+                  gap: 4,
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 100,
+                }}
+              >
+                {['👍', '❤️', '😂', '🎉', '🙌'].map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      sendReaction(emoji);
+                      setIsReactionMenuOpen(false);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: 24,
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-md)',
+                      transition: 'transform 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Hand raise */}
         <ControlBtn
