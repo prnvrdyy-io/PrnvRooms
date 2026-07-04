@@ -241,7 +241,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* ── Layout grid ─────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="profile-layout" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
 
         {/* ── Left: Profile card ──────────────────────────────────── */}
         <motion.div

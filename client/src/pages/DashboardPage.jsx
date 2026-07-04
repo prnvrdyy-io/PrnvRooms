@@ -99,6 +99,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
+        className="dashboard-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -128,7 +129,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div className="dashboard-header-actions" style={{ display: 'flex', gap: 10 }}>
           <Button
             variant="outline"
             leftIcon={<Users size={15} />}
@@ -151,6 +152,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
+        className="stats-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -212,6 +214,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
+        className="quick-actions-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -290,6 +293,7 @@ export default function DashboardPage() {
           <EmptyState onAction={() => setIsNewMeetingModalOpen(true)} />
         ) : (
           <div
+            className="meetings-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',

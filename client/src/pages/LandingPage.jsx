@@ -136,6 +136,7 @@ function HeroSection() {
           gap: 64,
           alignItems: 'center',
         }}
+        className="hero-grid"
       >
         {/* Left — Text */}
         <div>
@@ -167,6 +168,7 @@ function HeroSection() {
           {/* Headline */}
           <motion.h1
             {...fadeUp(0.05)}
+            className="hero-headline"
             style={{
               fontSize: 'clamp(36px, 5vw, 56px)',
               fontWeight: 800,
@@ -200,6 +202,7 @@ function HeroSection() {
           {/* CTAs */}
           <motion.div
             {...fadeUp(0.15)}
+            className="hero-cta-row"
             style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}
           >
             <Link to="/register">
@@ -224,6 +227,7 @@ function HeroSection() {
           {/* Social proof line */}
           <motion.div
             {...fadeUp(0.2)}
+            className="hero-proof-row"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -246,6 +250,7 @@ function HeroSection() {
 
         {/* Right — Product mockup */}
         <motion.div
+          className="hero-mockup"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
@@ -461,6 +466,7 @@ function TechBadgeSection() {
           gap: 40,
           flexWrap: 'wrap',
         }}
+        className="tech-badge-row"
       >
         <span
           style={{
@@ -557,6 +563,7 @@ function FeaturesSection() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
             gap: 24,
           }}
+          className="features-grid"
         >
           {FEATURES.map((feature, i) => (
             <FeatureCard key={feature.title} {...feature} delay={i * 0.05} />
@@ -635,6 +642,7 @@ function CTASection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
+        className="cta-section"
         style={{
           maxWidth: 800,
           margin: '0 auto',
@@ -669,6 +677,7 @@ function CTASection() {
             Get started for free
           </p>
           <h2
+            className="cta-headline"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               fontWeight: 800,
@@ -730,6 +739,7 @@ function Footer() {
           flexWrap: 'wrap',
           gap: 16,
         }}
+        className="footer-inner"
       >
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

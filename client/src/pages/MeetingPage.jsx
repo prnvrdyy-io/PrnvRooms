@@ -112,6 +112,7 @@ function ControlBtn({ onClick, title, active, danger, disabled, children, badge 
   return (
     <div style={{ position: 'relative', display: 'inline-flex' }} title={title}>
       <button
+        className="control-btn-meeting"
         onClick={onClick}
         disabled={disabled}
         style={{
@@ -388,7 +389,7 @@ export default function MeetingPage() {
         </div>
 
         {/* Right: stats */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div className="meeting-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#8B949E', fontSize: 13 }}>
             <Clock size={14} />
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatElapsed(elapsed)}</span>
@@ -409,6 +410,7 @@ export default function MeetingPage() {
 
         {/* Video grid */}
         <div
+          className="meeting-video-grid"
           style={{
             flex: 1,
             padding: 16,
@@ -440,6 +442,7 @@ export default function MeetingPage() {
         <AnimatePresence>
           {isChatOpen && (
             <motion.div
+              className="meeting-chat-panel"
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 340, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
@@ -458,6 +461,7 @@ export default function MeetingPage() {
 
       {/* ── Control Bar ───────────────────────────────────────── */}
       <div
+        className="meeting-control-bar"
         style={{
           height: 88,
           display: 'flex',
@@ -522,7 +526,7 @@ export default function MeetingPage() {
         </ControlBtn>
 
         {/* Separator */}
-        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
+        <div className="control-separator" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
 
         {/* Host: mute all */}
         {isHost && (
@@ -544,10 +548,11 @@ export default function MeetingPage() {
         </ControlBtn>
 
         {/* Separator */}
-        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
+        <div className="control-separator" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 6px' }} />
 
         {/* Leave */}
         <button
+          className="meeting-leave-btn"
           onClick={handleLeave}
           title="Leave meeting"
           style={{

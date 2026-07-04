@@ -38,9 +38,10 @@ export function AuthLayout({ children }) {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
       }}
+      className="auth-layout-grid"
     >
-      {/* Left panel — brand */}
       <div
+        className="auth-brand-panel"
         style={{
           background: 'var(--color-primary)',
           display: 'flex',
@@ -167,6 +168,7 @@ export function AuthLayout({ children }) {
 
       {/* Right panel — form */}
       <div
+        className="auth-form-panel"
         style={{
           background: 'var(--bg-surface)',
           display: 'flex',
