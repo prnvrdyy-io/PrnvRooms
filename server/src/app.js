@@ -35,28 +35,30 @@ app.use(
   })
 );
 
-// ─── CORS ──────────────────────────────────────────────────────────────────
+// ─── CORS (manual — most reliable for Railway) ─────────────────────────────
+// We set headers manually instead of using the cors package to guarantee
+// Railway's reverse proxy doesn't interfere with preflight responses.
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'https://prnvrooms.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (Postman, mobile, server-to-server)
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
-// Handle preflight OPTIONS requests explicitly (required for production)
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
+  // Respond immediately to preflight OPTIONS — no further middleware needed
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  next();
+});
 
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
 // Global limiter — tightened per-route on sensitive endpoints (e.g., /auth)
