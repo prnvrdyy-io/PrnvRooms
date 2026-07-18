@@ -5,13 +5,16 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon",
-    "start": "NODE_OPTIONS=--openssl-legacy-provider node src/server.js",
+    "start": "node src/server.js",
     "test": "echo \"Tests coming in Phase 13\" && exit 0"
   },
   "keywords": ["webrtc", "socket.io", "express", "collaboration"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
