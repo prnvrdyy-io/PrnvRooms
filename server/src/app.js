@@ -23,6 +23,11 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// ─── Trust Proxy ───────────────────────────────────────────────────────────
+// Required on Railway/Render/Heroku — traffic goes through a reverse proxy.
+// Without this, express-rate-limit throws errors (→ 500 on every request).
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ────────────────────────────────────────────────────
 app.use(
   helmet({
@@ -31,14 +36,16 @@ app.use(
 );
 
 // ─── CORS ──────────────────────────────────────────────────────────────────
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true, // Allow cookies / auth headers
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+const corsOptions = {
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Handle preflight OPTIONS requests explicitly (required for production)
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
 // Global limiter — tightened per-route on sensitive endpoints (e.g., /auth)
