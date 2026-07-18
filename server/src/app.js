@@ -1,15 +1,8 @@
 /**
  * Express Application Factory
- *
- * Why separate app.js from server.js?
- * - app.js exports a configured Express instance (testable without binding a port)
- * - server.js creates the HTTP server, attaches Socket.io, and starts listening
- * - This pattern is standard in production Node.js services and makes
- *   integration testing dramatically simpler (just import app in tests)
  */
 
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
@@ -24,20 +17,9 @@ const { errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 // ─── Trust Proxy ───────────────────────────────────────────────────────────
-// Required on Railway/Render/Heroku — traffic goes through a reverse proxy.
-// Without this, express-rate-limit throws errors (→ 500 on every request).
 app.set('trust proxy', 1);
 
-// ─── Security Middleware ────────────────────────────────────────────────────
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow file downloads
-  })
-);
-
-// ─── CORS (manual — most reliable for Railway) ─────────────────────────────
-// We set headers manually instead of using the cors package to guarantee
-// Railway's reverse proxy doesn't interfere with preflight responses.
+// ─── CORS — MUST BE FIRST, before Helmet and everything else ───────────────
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'https://prnvrooms.vercel.app',
@@ -46,37 +28,49 @@ const ALLOWED_ORIGINS = [
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
-  // Respond immediately to preflight OPTIONS — no further middleware needed
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  // Always set CORS headers on every response
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  // Handle preflight immediately — return 200 before any other middleware
+  if (req.method === 'OPTIONS') {
+    return res.status(200).json({});
+  }
+
   next();
 });
 
+// ─── Security Middleware ────────────────────────────────────────────────────
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
-// Global limiter — tightened per-route on sensitive endpoints (e.g., /auth)
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 200,
-  standardHeaders: true,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
-
 app.use(globalLimiter);
 
 // ─── Body Parsing ──────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ─── Static File Serving (uploaded files) ──────────────────────────────────
+// ─── Static Files ──────────────────────────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ─── API Routes ────────────────────────────────────────────────────────────
@@ -85,12 +79,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/users', userRoutes);
 
-// Additional routes will be mounted here in later phases:
-// app.use('/api/meetings', meetingRoutes);
-// app.use('/api/messages', messageRoutes);
-// app.use('/api/files',    fileRoutes);
-
-// ─── Error Handling (must be last) ────────────────────────────────────────
+// ─── Error Handling ────────────────────────────────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
